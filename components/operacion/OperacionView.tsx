@@ -38,6 +38,63 @@ function estadoClase(estado: string) {
   return "border-[#bbf7d0] bg-[#f0fdf4] text-[#047857]";
 }
 
+/**
+ * Regla de cobro:
+ * - Ingresa hoy = 1 día.
+ * - Ingresa ayer = 2 días.
+ * - Ingresa anteayer = 3 días.
+ * - No importa la hora.
+ */
+function calcularDiasCalendario(fechaIngreso: string | null) {
+  if (!fechaIngreso) return 0;
+
+  const ingreso = new Date(fechaIngreso);
+  const hoy = new Date();
+
+  if (Number.isNaN(ingreso.getTime())) {
+    return 0;
+  }
+
+  const ingresoFecha = new Date(
+    ingreso.getFullYear(),
+    ingreso.getMonth(),
+    ingreso.getDate()
+  );
+
+  const hoyFecha = new Date(
+    hoy.getFullYear(),
+    hoy.getMonth(),
+    hoy.getDate()
+  );
+
+  const diferenciaMs = hoyFecha.getTime() - ingresoFecha.getTime();
+
+  const diasTranscurridos = Math.floor(
+    diferenciaMs / 1000 / 60 / 60 / 24
+  );
+
+  return Math.max(1, diasTranscurridos + 1);
+}
+
+function obtenerDiasCobrados(item: VehiculoOperacion) {
+  if (item.estado_operativo !== "ACTIVO") {
+    return 0;
+  }
+
+  return calcularDiasCalendario(item.fecha_ingreso);
+}
+
+function obtenerMontoEstimado(item: VehiculoOperacion) {
+  if (item.estado_operativo !== "ACTIVO") {
+    return 0;
+  }
+
+  const dias = obtenerDiasCobrados(item);
+  const tarifa = Number(item.tarifa ?? 0);
+
+  return dias * tarifa;
+}
+
 export default function OperacionView() {
   const [montado, setMontado] = useState(false);
 
@@ -94,9 +151,11 @@ export default function OperacionView() {
 
     return vehiculos.filter((item) => {
       const coincideEstado =
-        estadoFiltro === "TODOS" || item.estado_operativo === estadoFiltro;
+        estadoFiltro === "TODOS" ||
+        item.estado_operativo === estadoFiltro;
 
-      const texto = `${item.placa} ${item.marca} ${item.tipo_vehiculo} ${item.propietario} ${item.identidad}`.toLowerCase();
+      const texto =
+        `${item.placa} ${item.marca} ${item.tipo_vehiculo} ${item.propietario} ${item.identidad}`.toLowerCase();
 
       return coincideEstado && texto.includes(filtro);
     });
@@ -255,7 +314,7 @@ export default function OperacionView() {
                   Estado
                 </th>
                 <th className="border-b border-[#d9dde3] px-3 py-2 text-right font-semibold">
-                  Tiempo
+                  Días
                 </th>
                 <th className="border-b border-[#d9dde3] px-3 py-2 text-right font-semibold">
                   Monto
@@ -289,6 +348,9 @@ export default function OperacionView() {
                 vehiculosFiltrados.map((item) => {
                   const activo =
                     seleccionado?.vehiculo_id === item.vehiculo_id;
+
+                  const diasCobrados = obtenerDiasCobrados(item);
+                  const montoEstimado = obtenerMontoEstimado(item);
 
                   return (
                     <tr
@@ -324,11 +386,15 @@ export default function OperacionView() {
                       </td>
 
                       <td className="px-3 py-2 text-right text-[#4b5563]">
-                        {Number(item.dias ?? 0).toFixed(6)}
+                        {item.estado_operativo === "ACTIVO"
+                          ? diasCobrados
+                          : "—"}
                       </td>
 
                       <td className="px-3 py-2 text-right font-semibold text-[#111827]">
-                        {formatoMoneda(item.monto_estimado)}
+                        {item.estado_operativo === "ACTIVO"
+                          ? formatoMoneda(montoEstimado)
+                          : "—"}
                       </td>
 
                       <td className="px-3 py-2 text-right">
@@ -408,9 +474,13 @@ export default function OperacionView() {
                 </div>
 
                 <div className="flex justify-between gap-4">
-                  <span className="text-[#6b7280]">Tiempo</span>
+                  <span className="text-[#6b7280]">
+                    Días cobrados
+                  </span>
                   <span className="font-medium text-[#111827]">
-                    {Number(seleccionado.dias ?? 0).toFixed(6)}
+                    {seleccionado.estado_operativo === "ACTIVO"
+                      ? obtenerDiasCobrados(seleccionado)
+                      : "—"}
                   </span>
                 </div>
 
@@ -420,7 +490,11 @@ export default function OperacionView() {
                       Monto estimado
                     </span>
                     <span className="text-[18px] font-semibold text-[#111827]">
-                      {formatoMoneda(seleccionado.monto_estimado)}
+                      {seleccionado.estado_operativo === "ACTIVO"
+                        ? formatoMoneda(
+                            obtenerMontoEstimado(seleccionado)
+                          )
+                        : "—"}
                     </span>
                   </div>
                 </div>

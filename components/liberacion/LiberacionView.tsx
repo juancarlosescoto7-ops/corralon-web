@@ -29,18 +29,43 @@ function formatoMoneda(valor: number) {
   })}`;
 }
 
-function calcularDiasExactos(fechaIngreso: string) {
+/**
+ * Cálculo por día calendario.
+ *
+ * Regla:
+ * - Si ingresó hoy, cobra 1 día.
+ * - Si ingresó ayer, cobra 2 días.
+ * - Si ingresó anteayer, cobra 3 días.
+ *
+ * No importa la hora.
+ */
+function calcularDiasCalendario(fechaIngreso: string) {
   const ingreso = new Date(fechaIngreso);
-  const ahora = new Date();
+  const hoy = new Date();
 
   if (Number.isNaN(ingreso.getTime())) {
     return 0;
   }
 
-  const diferenciaMs = ahora.getTime() - ingreso.getTime();
-  const dias = diferenciaMs / 1000 / 60 / 60 / 24;
+  const ingresoFecha = new Date(
+    ingreso.getFullYear(),
+    ingreso.getMonth(),
+    ingreso.getDate()
+  );
 
-  return Math.max(dias, 0);
+  const hoyFecha = new Date(
+    hoy.getFullYear(),
+    hoy.getMonth(),
+    hoy.getDate()
+  );
+
+  const diferenciaMs = hoyFecha.getTime() - ingresoFecha.getTime();
+
+  const diasTranscurridos = Math.floor(
+    diferenciaMs / 1000 / 60 / 60 / 24
+  );
+
+  return Math.max(1, diasTranscurridos + 1);
 }
 
 export default function LiberacionView() {
@@ -52,8 +77,6 @@ export default function LiberacionView() {
   const [mensaje, setMensaje] = useState("");
   const [cargando, setCargando] = useState(false);
   const [liberando, setLiberando] = useState(false);
-
-  const [ahora, setAhora] = useState(new Date());
 
   async function cargarDecomisos() {
     try {
@@ -77,19 +100,13 @@ export default function LiberacionView() {
     cargarDecomisos();
   }, []);
 
-  useEffect(() => {
-    const interval = setInterval(() => {
-      setAhora(new Date());
-    }, 1000);
-
-    return () => clearInterval(interval);
-  }, []);
-
   const decomisosFiltrados = useMemo(() => {
     const filtro = busqueda.toLowerCase();
 
     return decomisos.filter((decomiso) => {
-      const texto = `${decomiso.placa} ${decomiso.fecha_ingreso}`.toLowerCase();
+      const texto =
+        `${decomiso.placa} ${decomiso.fecha_ingreso}`.toLowerCase();
+
       return texto.includes(filtro);
     });
   }, [decomisos, busqueda]);
@@ -103,7 +120,10 @@ export default function LiberacionView() {
       };
     }
 
-    const dias = calcularDiasExactos(decomisoSeleccionado.fecha_ingreso);
+    const dias = calcularDiasCalendario(
+      decomisoSeleccionado.fecha_ingreso
+    );
+
     const tarifa = Number(decomisoSeleccionado.tarifa ?? 0);
     const total = dias * tarifa;
 
@@ -112,7 +132,7 @@ export default function LiberacionView() {
       tarifa,
       total,
     };
-  }, [decomisoSeleccionado, ahora]);
+  }, [decomisoSeleccionado]);
 
   async function handleLiberar() {
     if (!decomisoSeleccionado) {
@@ -124,7 +144,9 @@ export default function LiberacionView() {
       setLiberando(true);
       setMensaje("");
 
-      const totalCobrado = await liberarDecomiso(decomisoSeleccionado.id);
+      const totalCobrado = await liberarDecomiso(
+        decomisoSeleccionado.id
+      );
 
       setMensaje(
         `Decomiso liberado correctamente. Total cobrado: ${formatoMoneda(
@@ -157,6 +179,7 @@ export default function LiberacionView() {
             <h2 className="text-[14px] font-semibold text-[#111827]">
               Decomisos activos
             </h2>
+
             <p className="mt-0.5 text-[12px] text-[#6b7280]">
               Seleccione el registro que será liberado.
             </p>
@@ -177,12 +200,15 @@ export default function LiberacionView() {
                 <th className="border-b border-[#d9dde3] px-3 py-2 font-semibold">
                   Placa
                 </th>
+
                 <th className="border-b border-[#d9dde3] px-3 py-2 font-semibold">
                   Fecha ingreso
                 </th>
+
                 <th className="border-b border-[#d9dde3] px-3 py-2 text-right font-semibold">
                   Tarifa diaria
                 </th>
+
                 <th className="border-b border-[#d9dde3] px-3 py-2 text-right font-semibold">
                   Acción
                 </th>
@@ -217,7 +243,9 @@ export default function LiberacionView() {
                     <tr
                       key={decomiso.id}
                       className={`border-b border-[#edf0f3] ${
-                        seleccionado ? "bg-[#eef2f7]" : "hover:bg-[#f9fafb]"
+                        seleccionado
+                          ? "bg-[#eef2f7]"
+                          : "hover:bg-[#f9fafb]"
                       }`}
                     >
                       <td className="px-3 py-2 font-semibold text-[#111827]">
@@ -235,7 +263,9 @@ export default function LiberacionView() {
                       <td className="px-3 py-2 text-right">
                         <button
                           type="button"
-                          onClick={() => setDecomisoSeleccionado(decomiso)}
+                          onClick={() =>
+                            setDecomisoSeleccionado(decomiso)
+                          }
                           className={`h-8 border px-3 text-[12px] transition ${
                             seleccionado
                               ? "border-[#1f2933] bg-[#1f2933] text-white"
@@ -261,8 +291,9 @@ export default function LiberacionView() {
             <h2 className="text-[14px] font-semibold text-[#111827]">
               Liquidación
             </h2>
+
             <p className="mt-0.5 text-[12px] text-[#6b7280]">
-              Cálculo exacto por tiempo transcurrido.
+              Cálculo por día calendario.
             </p>
           </div>
 
@@ -271,6 +302,7 @@ export default function LiberacionView() {
               <div className="space-y-2 text-[13px]">
                 <div className="flex justify-between gap-4">
                   <span className="text-[#6b7280]">Placa</span>
+
                   <span className="font-semibold text-[#111827]">
                     {decomisoSeleccionado.placa}
                   </span>
@@ -278,20 +310,29 @@ export default function LiberacionView() {
 
                 <div className="flex justify-between gap-4">
                   <span className="text-[#6b7280]">Ingreso</span>
+
                   <span className="text-right text-[#111827]">
-                    {formatearFecha(decomisoSeleccionado.fecha_ingreso)}
+                    {formatearFecha(
+                      decomisoSeleccionado.fecha_ingreso
+                    )}
                   </span>
                 </div>
 
                 <div className="flex justify-between gap-4">
-                  <span className="text-[#6b7280]">Tiempo</span>
+                  <span className="text-[#6b7280]">
+                    Días cobrados
+                  </span>
+
                   <span className="font-medium text-[#111827]">
-                    {detalle.dias.toFixed(6)}
+                    {detalle.dias}
                   </span>
                 </div>
 
                 <div className="flex justify-between gap-4">
-                  <span className="text-[#6b7280]">Tarifa diaria</span>
+                  <span className="text-[#6b7280]">
+                    Tarifa diaria
+                  </span>
+
                   <span className="font-medium text-[#111827]">
                     {formatoMoneda(detalle.tarifa)}
                   </span>
@@ -302,6 +343,7 @@ export default function LiberacionView() {
                     <span className="text-[13px] font-semibold text-[#374151]">
                       Total estimado
                     </span>
+
                     <span className="text-[18px] font-semibold tracking-tight text-[#111827]">
                       {formatoMoneda(detalle.total)}
                     </span>
@@ -336,6 +378,7 @@ export default function LiberacionView() {
             <h2 className="text-[14px] font-semibold text-[#111827]">
               Control operativo
             </h2>
+
             <p className="mt-0.5 text-[12px] text-[#6b7280]">
               Resumen de registros activos.
             </p>
@@ -346,6 +389,7 @@ export default function LiberacionView() {
               <p className="text-[11px] uppercase tracking-wide text-[#6b7280]">
                 Activos
               </p>
+
               <p className="mt-1 text-[18px] font-semibold text-[#111827]">
                 {decomisos.length}
               </p>
@@ -355,6 +399,7 @@ export default function LiberacionView() {
               <p className="text-[11px] uppercase tracking-wide text-[#6b7280]">
                 Selección
               </p>
+
               <p className="mt-1 text-[18px] font-semibold text-[#111827]">
                 {decomisoSeleccionado ? "1" : "0"}
               </p>
