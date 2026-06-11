@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState, type FormEvent } from "react";
 import {
   crearVehiculo,
   listarVehiculos,
@@ -40,7 +40,9 @@ export default function VehiculosView() {
       setPropietarios(propietariosData);
       setVehiculos(vehiculosData);
     } catch (error) {
-      setMensaje(error instanceof Error ? error.message : "Error al cargar datos");
+      setMensaje(
+        error instanceof Error ? error.message : "Error al cargar datos"
+      );
     } finally {
       setCargando(false);
     }
@@ -50,7 +52,7 @@ export default function VehiculosView() {
     cargarDatos();
   }, []);
 
-  async function handleGuardar(e: React.FormEvent<HTMLFormElement>) {
+  async function handleGuardar(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
 
     if (!propietarioId || !placa.trim() || !marca.trim() || !tipoVehiculo) {
@@ -77,7 +79,11 @@ export default function VehiculosView() {
 
       setMensaje("Vehículo registrado correctamente.");
     } catch (error) {
-      setMensaje(error instanceof Error ? error.message : "Error al registrar vehículo");
+      setMensaje(
+        error instanceof Error
+          ? error.message
+          : "Error al registrar vehículo"
+      );
     } finally {
       setGuardando(false);
     }
@@ -87,9 +93,9 @@ export default function VehiculosView() {
     const filtro = busqueda.toLowerCase();
 
     return vehiculos.filter((vehiculo) => {
-      const texto = `${vehiculo.placa} ${vehiculo.marca} ${vehiculo.tipo_vehiculo} ${
-        vehiculo.propietario ?? ""
-      }`.toLowerCase();
+      const texto = `${vehiculo.placa} ${vehiculo.marca} ${
+        vehiculo.tipo_vehiculo
+      } ${vehiculo.propietario ?? ""}`.toLowerCase();
 
       return texto.includes(filtro);
     });
@@ -102,26 +108,29 @@ export default function VehiculosView() {
         onSubmit={handleGuardar}
         className="border border-[#d9dde3] bg-white"
       >
-        <div className="border-b border-[#d9dde3] px-4 py-3">
+        <div className="border-b border-[#d9dde3] px-3 py-3 sm:px-4">
           <h2 className="text-[14px] font-semibold text-[#111827]">
             Nuevo vehículo
           </h2>
+
           <p className="mt-0.5 text-[12px] text-[#6b7280]">
             Vincule un vehículo a un propietario.
           </p>
         </div>
 
-        <div className="space-y-3 px-4 py-4">
+        <div className="space-y-3 px-3 py-4 sm:px-4">
           <div>
             <label className="mb-1 block text-[12px] font-medium text-[#4b5563]">
               Propietario
             </label>
+
             <select
               value={propietarioId}
               onChange={(e) => setPropietarioId(e.target.value)}
               className="h-9 w-full border border-[#cfd4dc] bg-white px-2.5 text-[13px] text-[#111827] outline-none focus:border-[#6b7280]"
             >
               <option value="">Seleccione propietario</option>
+
               {propietarios.map((propietario) => (
                 <option key={propietario.id} value={propietario.id}>
                   {propietario.nombre} — {propietario.identidad}
@@ -134,6 +143,7 @@ export default function VehiculosView() {
             <label className="mb-1 block text-[12px] font-medium text-[#4b5563]">
               Placa
             </label>
+
             <input
               value={placa}
               onChange={(e) => setPlaca(e.target.value)}
@@ -146,6 +156,7 @@ export default function VehiculosView() {
             <label className="mb-1 block text-[12px] font-medium text-[#4b5563]">
               Marca
             </label>
+
             <input
               value={marca}
               onChange={(e) => setMarca(e.target.value)}
@@ -158,12 +169,14 @@ export default function VehiculosView() {
             <label className="mb-1 block text-[12px] font-medium text-[#4b5563]">
               Tipo
             </label>
+
             <select
               value={tipoVehiculo}
               onChange={(e) => setTipoVehiculo(e.target.value)}
               className="h-9 w-full border border-[#cfd4dc] bg-white px-2.5 text-[13px] text-[#111827] outline-none focus:border-[#6b7280]"
             >
               <option value="">Seleccione tipo</option>
+
               {TIPOS_VEHICULO.map((tipo) => (
                 <option key={tipo} value={tipo}>
                   {tipo}
@@ -190,11 +203,12 @@ export default function VehiculosView() {
 
       {/* LISTADO */}
       <div className="min-w-0 border border-[#d9dde3] bg-white">
-        <div className="flex flex-col gap-3 border-b border-[#d9dde3] px-4 py-3 md:flex-row md:items-center md:justify-between">
+        <div className="flex flex-col gap-3 border-b border-[#d9dde3] px-3 py-3 sm:px-4 md:flex-row md:items-center md:justify-between">
           <div>
             <h2 className="text-[14px] font-semibold text-[#111827]">
               Vehículos registrados
             </h2>
+
             <p className="mt-0.5 text-[12px] text-[#6b7280]">
               {vehiculos.length} registros en base de datos
             </p>
@@ -208,19 +222,62 @@ export default function VehiculosView() {
           />
         </div>
 
-        <div className="overflow-x-auto">
+        {/* VISTA MÓVIL */}
+        <div className="divide-y divide-[#edf0f3] md:hidden">
+          {cargando ? (
+            <div className="px-3 py-6 text-center text-[12px] text-[#6b7280]">
+              Cargando vehículos...
+            </div>
+          ) : vehiculosFiltrados.length === 0 ? (
+            <div className="px-3 py-6 text-center text-[12px] text-[#6b7280]">
+              Sin datos
+            </div>
+          ) : (
+            vehiculosFiltrados.map((vehiculo) => (
+              <div key={vehiculo.id} className="p-3">
+                <div className="flex items-start justify-between gap-3">
+                  <div className="min-w-0">
+                    <p className="text-[14px] font-semibold text-[#111827]">
+                      {vehiculo.placa}
+                    </p>
+
+                    <p className="mt-0.5 text-[12px] text-[#6b7280]">
+                      {vehiculo.marca} · {vehiculo.tipo_vehiculo}
+                    </p>
+                  </div>
+                </div>
+
+                <div className="mt-3 grid gap-1 text-[12px]">
+                  <div className="flex justify-between gap-3">
+                    <span className="text-[#6b7280]">Propietario</span>
+
+                    <span className="text-right font-medium text-[#111827]">
+                      {vehiculo.propietario ?? "Sin propietario"}
+                    </span>
+                  </div>
+                </div>
+              </div>
+            ))
+          )}
+        </div>
+
+        {/* VISTA ESCRITORIO */}
+        <div className="hidden overflow-x-auto md:block">
           <table className="w-full min-w-[780px] border-collapse text-left text-[13px]">
             <thead className="bg-[#f3f4f6] text-[12px] text-[#4b5563]">
               <tr>
                 <th className="border-b border-[#d9dde3] px-3 py-2 font-semibold">
                   Placa
                 </th>
+
                 <th className="border-b border-[#d9dde3] px-3 py-2 font-semibold">
                   Marca
                 </th>
+
                 <th className="border-b border-[#d9dde3] px-3 py-2 font-semibold">
                   Tipo
                 </th>
+
                 <th className="border-b border-[#d9dde3] px-3 py-2 font-semibold">
                   Propietario
                 </th>
@@ -255,12 +312,15 @@ export default function VehiculosView() {
                     <td className="px-3 py-2 font-semibold text-[#111827]">
                       {vehiculo.placa}
                     </td>
+
                     <td className="px-3 py-2 text-[#4b5563]">
                       {vehiculo.marca}
                     </td>
+
                     <td className="px-3 py-2 text-[#4b5563]">
                       {vehiculo.tipo_vehiculo}
                     </td>
+
                     <td className="px-3 py-2 text-[#4b5563]">
                       {vehiculo.propietario ?? "Sin propietario"}
                     </td>

@@ -141,7 +141,7 @@ export default function DecomisosView() {
     <section className="grid gap-4 xl:grid-cols-[1fr_360px]">
       {/* LISTA DE VEHÍCULOS */}
       <div className="min-w-0 border border-[#d9dde3] bg-white">
-        <div className="flex flex-col gap-3 border-b border-[#d9dde3] px-4 py-3 md:flex-row md:items-center md:justify-between">
+        <div className="flex flex-col gap-3 border-b border-[#d9dde3] px-3 py-3 sm:px-4 md:flex-row md:items-center md:justify-between">
           <div>
             <h2 className="text-[14px] font-semibold text-[#111827]">
               Vehículos disponibles
@@ -159,7 +159,66 @@ export default function DecomisosView() {
           />
         </div>
 
-        <div className="overflow-x-auto">
+        {/* VISTA MÓVIL */}
+        <div className="divide-y divide-[#edf0f3] md:hidden">
+          {cargando ? (
+            <div className="px-3 py-6 text-center text-[12px] text-[#6b7280]">
+              Cargando vehículos...
+            </div>
+          ) : vehiculosFiltrados.length === 0 ? (
+            <div className="px-3 py-6 text-center text-[12px] text-[#6b7280]">
+              Sin datos
+            </div>
+          ) : (
+            vehiculosFiltrados.map((vehiculo) => {
+              const seleccionado = vehiculoSeleccionado?.id === vehiculo.id;
+
+              return (
+                <div
+                  key={vehiculo.id}
+                  className={`p-3 ${
+                    seleccionado ? "bg-[#eef2f7]" : "bg-white"
+                  }`}
+                >
+                  <div className="flex items-start justify-between gap-3">
+                    <div className="min-w-0">
+                      <p className="text-[14px] font-semibold text-[#111827]">
+                        {vehiculo.placa}
+                      </p>
+                      <p className="mt-0.5 text-[12px] text-[#6b7280]">
+                        {vehiculo.marca} · {vehiculo.tipo_vehiculo}
+                      </p>
+                    </div>
+
+                    <button
+                      type="button"
+                      onClick={() => setVehiculoSeleccionado(vehiculo)}
+                      className={`h-8 shrink-0 border px-3 text-[12px] transition ${
+                        seleccionado
+                          ? "border-[#1f2933] bg-[#1f2933] text-white"
+                          : "border-[#cfd4dc] bg-white text-[#374151]"
+                      }`}
+                    >
+                      {seleccionado ? "Listo" : "Seleccionar"}
+                    </button>
+                  </div>
+
+                  <div className="mt-3 grid gap-1 text-[12px]">
+                    <div className="flex justify-between gap-3">
+                      <span className="text-[#6b7280]">Propietario</span>
+                      <span className="text-right font-medium text-[#111827]">
+                        {vehiculo.propietario ?? "Sin propietario"}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              );
+            })
+          )}
+        </div>
+
+        {/* VISTA ESCRITORIO */}
+        <div className="hidden overflow-x-auto md:block">
           <table className="w-full min-w-[820px] border-collapse text-left text-[13px]">
             <thead className="bg-[#f3f4f6] text-[12px] text-[#4b5563]">
               <tr>
@@ -249,7 +308,7 @@ export default function DecomisosView() {
       {/* PANEL DE ACCIÓN */}
       <aside className="space-y-4">
         <div className="border border-[#d9dde3] bg-white">
-          <div className="border-b border-[#d9dde3] px-4 py-3">
+          <div className="border-b border-[#d9dde3] px-3 py-3 sm:px-4">
             <h2 className="text-[14px] font-semibold text-[#111827]">
               Registro de decomiso
             </h2>
@@ -258,7 +317,7 @@ export default function DecomisosView() {
             </p>
           </div>
 
-          <div className="px-4 py-4">
+          <div className="px-3 py-4 sm:px-4">
             {vehiculoSeleccionado ? (
               <div className="space-y-2 text-[13px]">
                 <div className="flex justify-between gap-4">
@@ -313,7 +372,7 @@ export default function DecomisosView() {
         </div>
 
         <div className="border border-[#d9dde3] bg-white">
-          <div className="border-b border-[#d9dde3] px-4 py-3">
+          <div className="border-b border-[#d9dde3] px-3 py-3 sm:px-4">
             <h2 className="text-[14px] font-semibold text-[#111827]">
               Decomisos activos
             </h2>
@@ -322,7 +381,7 @@ export default function DecomisosView() {
             </p>
           </div>
 
-          <div className="border-b border-[#d9dde3] px-4 py-3">
+          <div className="border-b border-[#d9dde3] px-3 py-3 sm:px-4">
             <input
               value={busquedaDecomiso}
               onChange={(e) => setBusquedaDecomiso(e.target.value)}
@@ -331,7 +390,36 @@ export default function DecomisosView() {
             />
           </div>
 
-          <div className="max-h-[360px] overflow-auto">
+          {/* DECOMISOS MÓVIL */}
+          <div className="divide-y divide-[#edf0f3] md:hidden">
+            {decomisosFiltrados.length === 0 ? (
+              <div className="px-3 py-6 text-center text-[12px] text-[#6b7280]">
+                Sin datos
+              </div>
+            ) : (
+              decomisosFiltrados.map((decomiso) => (
+                <div key={decomiso.id} className="p-3">
+                  <div className="flex justify-between gap-3">
+                    <div>
+                      <p className="text-[14px] font-semibold text-[#111827]">
+                        {decomiso.placa}
+                      </p>
+                      <p className="mt-0.5 text-[11px] text-[#6b7280]">
+                        {formatearFecha(decomiso.fecha_ingreso)}
+                      </p>
+                    </div>
+
+                    <p className="text-right text-[13px] font-semibold text-[#111827]">
+                      {formatoMoneda(Number(decomiso.tarifa ?? 0))}
+                    </p>
+                  </div>
+                </div>
+              ))
+            )}
+          </div>
+
+          {/* DECOMISOS ESCRITORIO */}
+          <div className="hidden max-h-[360px] overflow-auto md:block">
             <table className="w-full border-collapse text-left text-[13px]">
               <thead className="sticky top-0 bg-[#f3f4f6] text-[12px] text-[#4b5563]">
                 <tr>

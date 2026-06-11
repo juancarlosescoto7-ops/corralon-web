@@ -264,11 +264,12 @@ export default function OperacionView() {
     <section className="grid gap-4 xl:grid-cols-[1fr_360px]">
       {/* LISTA OPERATIVA */}
       <div className="min-w-0 border border-[#d9dde3] bg-white">
-        <div className="flex flex-col gap-3 border-b border-[#d9dde3] px-4 py-3 lg:flex-row lg:items-center lg:justify-between">
+        <div className="flex flex-col gap-3 border-b border-[#d9dde3] px-3 py-3 sm:px-4 lg:flex-row lg:items-center lg:justify-between">
           <div>
             <h2 className="text-[14px] font-semibold text-[#111827]">
               Centro operativo
             </h2>
+
             <p className="mt-0.5 text-[12px] text-[#6b7280]">
               Búsqueda, estado y acción directa por vehículo.
             </p>
@@ -278,7 +279,7 @@ export default function OperacionView() {
             <select
               value={estadoFiltro}
               onChange={(e) => setEstadoFiltro(e.target.value)}
-              className="h-8 border border-[#cfd4dc] bg-white px-2.5 text-[12px] text-[#111827] outline-none focus:border-[#6b7280]"
+              className="h-8 w-full border border-[#cfd4dc] bg-white px-2.5 text-[12px] text-[#111827] outline-none focus:border-[#6b7280] sm:w-40"
             >
               <option value="TODOS">Todos</option>
               <option value="ACTIVO">Activos</option>
@@ -294,31 +295,135 @@ export default function OperacionView() {
           </div>
         </div>
 
-        <div className="overflow-x-auto">
+        {/* VISTA MÓVIL */}
+        <div className="divide-y divide-[#edf0f3] md:hidden">
+          {cargando ? (
+            <div className="px-3 py-6 text-center text-[12px] text-[#6b7280]">
+              Cargando operación...
+            </div>
+          ) : vehiculosFiltrados.length === 0 ? (
+            <div className="px-3 py-6 text-center text-[12px] text-[#6b7280]">
+              Sin datos
+            </div>
+          ) : (
+            vehiculosFiltrados.map((item) => {
+              const activo =
+                seleccionado?.vehiculo_id === item.vehiculo_id;
+
+              const diasCobrados = obtenerDiasCobrados(item);
+              const montoEstimado = obtenerMontoEstimado(item);
+
+              return (
+                <div
+                  key={item.vehiculo_id}
+                  className={`p-3 ${
+                    activo ? "bg-[#eef2f7]" : "bg-white"
+                  }`}
+                >
+                  <div className="flex items-start justify-between gap-3">
+                    <div className="min-w-0">
+                      <p className="text-[14px] font-semibold text-[#111827]">
+                        {item.placa}
+                      </p>
+
+                      <p className="mt-0.5 text-[12px] text-[#6b7280]">
+                        {item.marca} · {item.tipo_vehiculo}
+                      </p>
+                    </div>
+
+                    <span
+                      className={`shrink-0 border px-2 py-0.5 text-[11px] font-medium ${estadoClase(
+                        item.estado_operativo
+                      )}`}
+                    >
+                      {item.estado_operativo}
+                    </span>
+                  </div>
+
+                  <div className="mt-3 grid gap-1 text-[12px]">
+                    <div className="flex justify-between gap-3">
+                      <span className="text-[#6b7280]">Propietario</span>
+                      <span className="text-right font-medium text-[#111827]">
+                        {item.propietario}
+                      </span>
+                    </div>
+
+                    <div className="flex justify-between gap-3">
+                      <span className="text-[#6b7280]">Identidad</span>
+                      <span className="text-right text-[#111827]">
+                        {item.identidad}
+                      </span>
+                    </div>
+
+                    <div className="flex justify-between gap-3">
+                      <span className="text-[#6b7280]">Días</span>
+                      <span className="text-right text-[#111827]">
+                        {item.estado_operativo === "ACTIVO"
+                          ? diasCobrados
+                          : "—"}
+                      </span>
+                    </div>
+
+                    <div className="flex justify-between gap-3">
+                      <span className="text-[#6b7280]">Monto</span>
+                      <span className="text-right font-semibold text-[#111827]">
+                        {item.estado_operativo === "ACTIVO"
+                          ? formatoMoneda(montoEstimado)
+                          : "—"}
+                      </span>
+                    </div>
+                  </div>
+
+                  <button
+                    type="button"
+                    onClick={() => setSeleccionado(item)}
+                    className={`mt-3 h-8 w-full border text-[12px] transition ${
+                      activo
+                        ? "border-[#1f2933] bg-[#1f2933] text-white"
+                        : "border-[#cfd4dc] bg-white text-[#374151]"
+                    }`}
+                  >
+                    {activo ? "Seleccionado" : "Seleccionar"}
+                  </button>
+                </div>
+              );
+            })
+          )}
+        </div>
+
+        {/* VISTA ESCRITORIO */}
+        <div className="hidden overflow-x-auto md:block">
           <table className="w-full min-w-[980px] border-collapse text-left text-[12px]">
             <thead className="bg-[#f3f4f6] text-[#4b5563]">
               <tr>
                 <th className="border-b border-[#d9dde3] px-3 py-2 font-semibold">
                   Placa
                 </th>
+
                 <th className="border-b border-[#d9dde3] px-3 py-2 font-semibold">
                   Propietario
                 </th>
+
                 <th className="border-b border-[#d9dde3] px-3 py-2 font-semibold">
                   Identidad
                 </th>
+
                 <th className="border-b border-[#d9dde3] px-3 py-2 font-semibold">
                   Tipo
                 </th>
+
                 <th className="border-b border-[#d9dde3] px-3 py-2 font-semibold">
                   Estado
                 </th>
+
                 <th className="border-b border-[#d9dde3] px-3 py-2 text-right font-semibold">
                   Días
                 </th>
+
                 <th className="border-b border-[#d9dde3] px-3 py-2 text-right font-semibold">
                   Monto
                 </th>
+
                 <th className="border-b border-[#d9dde3] px-3 py-2 text-right font-semibold">
                   Acción
                 </th>
@@ -422,16 +527,17 @@ export default function OperacionView() {
       {/* PANEL DERECHO */}
       <aside className="space-y-4">
         <div className="border border-[#d9dde3] bg-white">
-          <div className="border-b border-[#d9dde3] px-4 py-3">
+          <div className="border-b border-[#d9dde3] px-3 py-3 sm:px-4">
             <h2 className="text-[14px] font-semibold text-[#111827]">
               Acción operativa
             </h2>
+
             <p className="mt-0.5 text-[12px] text-[#6b7280]">
               Registre o libere según el estado actual.
             </p>
           </div>
 
-          <div className="px-4 py-4">
+          <div className="px-3 py-4 sm:px-4">
             {seleccionado ? (
               <div className="space-y-2 text-[13px]">
                 <div className="flex justify-between gap-4">
@@ -474,9 +580,7 @@ export default function OperacionView() {
                 </div>
 
                 <div className="flex justify-between gap-4">
-                  <span className="text-[#6b7280]">
-                    Días cobrados
-                  </span>
+                  <span className="text-[#6b7280]">Días cobrados</span>
                   <span className="font-medium text-[#111827]">
                     {seleccionado.estado_operativo === "ACTIVO"
                       ? obtenerDiasCobrados(seleccionado)
@@ -489,11 +593,10 @@ export default function OperacionView() {
                     <span className="font-semibold text-[#374151]">
                       Monto estimado
                     </span>
+
                     <span className="text-[18px] font-semibold text-[#111827]">
                       {seleccionado.estado_operativo === "ACTIVO"
-                        ? formatoMoneda(
-                            obtenerMontoEstimado(seleccionado)
-                          )
+                        ? formatoMoneda(obtenerMontoEstimado(seleccionado))
                         : "—"}
                     </span>
                   </div>
@@ -534,7 +637,7 @@ export default function OperacionView() {
         </div>
 
         <div className="border border-[#d9dde3] bg-white">
-          <div className="border-b border-[#d9dde3] px-4 py-3">
+          <div className="border-b border-[#d9dde3] px-3 py-3 sm:px-4">
             <h2 className="text-[14px] font-semibold text-[#111827]">
               Resumen operativo
             </h2>

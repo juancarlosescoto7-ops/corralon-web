@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState, type FormEvent } from "react";
 import {
   crearPropietario,
   listarPropietarios,
@@ -39,7 +39,7 @@ export default function PropietariosView() {
     cargarPropietarios();
   }, []);
 
-  async function handleGuardar(e: React.FormEvent<HTMLFormElement>) {
+  async function handleGuardar(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
 
     if (!nombre.trim() || !identidad.trim()) {
@@ -86,20 +86,22 @@ export default function PropietariosView() {
         onSubmit={handleGuardar}
         className="border border-[#d9dde3] bg-white"
       >
-        <div className="border-b border-[#d9dde3] px-4 py-3">
+        <div className="border-b border-[#d9dde3] px-3 py-3 sm:px-4">
           <h2 className="text-[14px] font-semibold text-[#111827]">
             Nuevo propietario
           </h2>
+
           <p className="mt-0.5 text-[12px] text-[#6b7280]">
             Registro base para vincular vehículos.
           </p>
         </div>
 
-        <div className="space-y-3 px-4 py-4">
+        <div className="space-y-3 px-3 py-4 sm:px-4">
           <div>
             <label className="mb-1 block text-[12px] font-medium text-[#4b5563]">
               Nombre completo
             </label>
+
             <input
               value={nombre}
               onChange={(e) => setNombre(e.target.value)}
@@ -112,6 +114,7 @@ export default function PropietariosView() {
             <label className="mb-1 block text-[12px] font-medium text-[#4b5563]">
               Identidad
             </label>
+
             <input
               value={identidad}
               onChange={(e) => setIdentidad(e.target.value)}
@@ -138,11 +141,12 @@ export default function PropietariosView() {
 
       {/* LISTADO */}
       <div className="min-w-0 border border-[#d9dde3] bg-white">
-        <div className="flex flex-col gap-3 border-b border-[#d9dde3] px-4 py-3 md:flex-row md:items-center md:justify-between">
+        <div className="flex flex-col gap-3 border-b border-[#d9dde3] px-3 py-3 sm:px-4 md:flex-row md:items-center md:justify-between">
           <div>
             <h2 className="text-[14px] font-semibold text-[#111827]">
               Propietarios registrados
             </h2>
+
             <p className="mt-0.5 text-[12px] text-[#6b7280]">
               {propietarios.length} registros en base de datos
             </p>
@@ -156,13 +160,44 @@ export default function PropietariosView() {
           />
         </div>
 
-        <div className="overflow-x-auto">
+        {/* VISTA MÓVIL */}
+        <div className="divide-y divide-[#edf0f3] md:hidden">
+          {cargando ? (
+            <div className="px-3 py-6 text-center text-[12px] text-[#6b7280]">
+              Cargando propietarios...
+            </div>
+          ) : propietariosFiltrados.length === 0 ? (
+            <div className="px-3 py-6 text-center text-[12px] text-[#6b7280]">
+              Sin datos
+            </div>
+          ) : (
+            propietariosFiltrados.map((propietario) => (
+              <div key={propietario.id} className="p-3">
+                <p className="text-[14px] font-semibold text-[#111827]">
+                  {propietario.nombre}
+                </p>
+
+                <div className="mt-2 flex justify-between gap-3 text-[12px]">
+                  <span className="text-[#6b7280]">Identidad</span>
+
+                  <span className="text-right font-medium text-[#111827]">
+                    {propietario.identidad}
+                  </span>
+                </div>
+              </div>
+            ))
+          )}
+        </div>
+
+        {/* VISTA ESCRITORIO */}
+        <div className="hidden overflow-x-auto md:block">
           <table className="w-full min-w-[620px] border-collapse text-left text-[13px]">
             <thead className="bg-[#f3f4f6] text-[12px] text-[#4b5563]">
               <tr>
                 <th className="border-b border-[#d9dde3] px-3 py-2 font-semibold">
                   Nombre
                 </th>
+
                 <th className="border-b border-[#d9dde3] px-3 py-2 font-semibold">
                   Identidad
                 </th>
@@ -197,6 +232,7 @@ export default function PropietariosView() {
                     <td className="px-3 py-2 font-medium text-[#111827]">
                       {propietario.nombre}
                     </td>
+
                     <td className="px-3 py-2 text-[#4b5563]">
                       {propietario.identidad}
                     </td>

@@ -69,6 +69,8 @@ function calcularDiasCalendario(fechaIngreso: string) {
 }
 
 export default function LiberacionView() {
+  const [montado, setMontado] = useState(false);
+
   const [decomisos, setDecomisos] = useState<DecomisoActivo[]>([]);
   const [decomisoSeleccionado, setDecomisoSeleccionado] =
     useState<DecomisoActivo | null>(null);
@@ -77,6 +79,10 @@ export default function LiberacionView() {
   const [mensaje, setMensaje] = useState("");
   const [cargando, setCargando] = useState(false);
   const [liberando, setLiberando] = useState(false);
+
+  useEffect(() => {
+    setMontado(true);
+  }, []);
 
   async function cargarDecomisos() {
     try {
@@ -97,8 +103,10 @@ export default function LiberacionView() {
   }
 
   useEffect(() => {
-    cargarDecomisos();
-  }, []);
+    if (montado) {
+      cargarDecomisos();
+    }
+  }, [montado]);
 
   const decomisosFiltrados = useMemo(() => {
     const filtro = busqueda.toLowerCase();
@@ -170,11 +178,21 @@ export default function LiberacionView() {
 
   const puedeLiberar = Boolean(decomisoSeleccionado) && !liberando;
 
+  if (!montado) {
+    return (
+      <section className="border border-[#d9dde3] bg-white px-4 py-6">
+        <p className="text-[12px] text-[#6b7280]">
+          Cargando módulo de liberación...
+        </p>
+      </section>
+    );
+  }
+
   return (
     <section className="grid gap-4 xl:grid-cols-[1fr_360px]">
       {/* LISTADO DE DECOMISOS ACTIVOS */}
       <div className="min-w-0 border border-[#d9dde3] bg-white">
-        <div className="flex flex-col gap-3 border-b border-[#d9dde3] px-4 py-3 md:flex-row md:items-center md:justify-between">
+        <div className="flex flex-col gap-3 border-b border-[#d9dde3] px-3 py-3 sm:px-4 md:flex-row md:items-center md:justify-between">
           <div>
             <h2 className="text-[14px] font-semibold text-[#111827]">
               Decomisos activos
@@ -193,7 +211,70 @@ export default function LiberacionView() {
           />
         </div>
 
-        <div className="overflow-x-auto">
+        {/* VISTA MÓVIL */}
+        <div className="divide-y divide-[#edf0f3] md:hidden">
+          {cargando ? (
+            <div className="px-3 py-6 text-center text-[12px] text-[#6b7280]">
+              Cargando decomisos...
+            </div>
+          ) : decomisosFiltrados.length === 0 ? (
+            <div className="px-3 py-6 text-center text-[12px] text-[#6b7280]">
+              Sin datos
+            </div>
+          ) : (
+            decomisosFiltrados.map((decomiso) => {
+              const seleccionado =
+                decomisoSeleccionado?.id === decomiso.id;
+
+              return (
+                <div
+                  key={decomiso.id}
+                  className={`p-3 ${
+                    seleccionado ? "bg-[#eef2f7]" : "bg-white"
+                  }`}
+                >
+                  <div className="flex items-start justify-between gap-3">
+                    <div className="min-w-0">
+                      <p className="text-[14px] font-semibold text-[#111827]">
+                        {decomiso.placa}
+                      </p>
+
+                      <p className="mt-0.5 text-[11px] text-[#6b7280]">
+                        {formatearFecha(decomiso.fecha_ingreso)}
+                      </p>
+                    </div>
+
+                    <button
+                      type="button"
+                      onClick={() =>
+                        setDecomisoSeleccionado(decomiso)
+                      }
+                      className={`h-8 shrink-0 border px-3 text-[12px] transition ${
+                        seleccionado
+                          ? "border-[#1f2933] bg-[#1f2933] text-white"
+                          : "border-[#cfd4dc] bg-white text-[#374151]"
+                      }`}
+                    >
+                      {seleccionado ? "Listo" : "Seleccionar"}
+                    </button>
+                  </div>
+
+                  <div className="mt-3 grid gap-1 text-[12px]">
+                    <div className="flex justify-between gap-3">
+                      <span className="text-[#6b7280]">Tarifa diaria</span>
+                      <span className="text-right font-semibold text-[#111827]">
+                        {formatoMoneda(Number(decomiso.tarifa ?? 0))}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              );
+            })
+          )}
+        </div>
+
+        {/* VISTA ESCRITORIO */}
+        <div className="hidden overflow-x-auto md:block">
           <table className="w-full min-w-[720px] border-collapse text-left text-[13px]">
             <thead className="bg-[#f3f4f6] text-[12px] text-[#4b5563]">
               <tr>
@@ -287,7 +368,7 @@ export default function LiberacionView() {
       {/* PANEL DE COBRO */}
       <aside className="space-y-4">
         <div className="border border-[#d9dde3] bg-white">
-          <div className="border-b border-[#d9dde3] px-4 py-3">
+          <div className="border-b border-[#d9dde3] px-3 py-3 sm:px-4">
             <h2 className="text-[14px] font-semibold text-[#111827]">
               Liquidación
             </h2>
@@ -297,7 +378,7 @@ export default function LiberacionView() {
             </p>
           </div>
 
-          <div className="px-4 py-4">
+          <div className="px-3 py-4 sm:px-4">
             {decomisoSeleccionado ? (
               <div className="space-y-2 text-[13px]">
                 <div className="flex justify-between gap-4">
@@ -374,7 +455,7 @@ export default function LiberacionView() {
         </div>
 
         <div className="border border-[#d9dde3] bg-white">
-          <div className="border-b border-[#d9dde3] px-4 py-3">
+          <div className="border-b border-[#d9dde3] px-3 py-3 sm:px-4">
             <h2 className="text-[14px] font-semibold text-[#111827]">
               Control operativo
             </h2>
@@ -385,7 +466,7 @@ export default function LiberacionView() {
           </div>
 
           <div className="grid grid-cols-2 divide-x divide-[#d9dde3]">
-            <div className="px-4 py-3">
+            <div className="px-3 py-3 sm:px-4">
               <p className="text-[11px] uppercase tracking-wide text-[#6b7280]">
                 Activos
               </p>
@@ -395,7 +476,7 @@ export default function LiberacionView() {
               </p>
             </div>
 
-            <div className="px-4 py-3">
+            <div className="px-3 py-3 sm:px-4">
               <p className="text-[11px] uppercase tracking-wide text-[#6b7280]">
                 Selección
               </p>
